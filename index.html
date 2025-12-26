@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Book Library</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Login Screen Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-box h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .login-error.active {
+            display: block;
+        }
+
+        /* Main App Styles */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            color: #333;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-email {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .btn-edit {
+            background: #ed8936;
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .btn-edit:hover {
+            background: #dd6b20;
+        }
+
+        .btn-logout {
+            background: #718096;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-logout:hover {
+            background: #4a5568;
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .book-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #f0f0f0;
+        }
+
+        .book-info {
+            margin-top: 10px;
+        }
+
+        .book-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .book-author {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .book-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .scanner-container {
+            margin: 20px 0;
+        }
+
+        #reader {
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 12px;
+            color: #666;
+        }
+
+        .empty-state h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            color: #666;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+    ============================================================================================================
+    COMPLETE SETUP INSTRUCTIONS - FOLLOW CAREFULLY
+    ============================================================================================================
+    
+    STEP 1: CREATE FIREBASE PROJECT (5 minutes)
+    ============================================================================================================
+    1. Open https://firebase.google.com in your browser
+    2. Click "Get Started" (blue button)
+    3. Sign in with your Google account
+    4. Click "Add project" or "Create a project"
+    5. Project name: Type "BookLibrary" (or any name you like)
+    6. Click "Continue"
+    7. Disable "Enable Google Analytics" (toggle it OFF - you don't need it)
+    8. Click "Create project"
+    9. Wait 30 seconds for project creation
+    10. Click "Continue" when it says "Your new project is ready"
+    
+    
+    STEP 2: ENABLE FIRESTORE DATABASE (3 minutes)
+    ============================================================================================================
+    1. In the left sidebar, click "Build" to expand it
+    2. Click "Firestore Database"
+    3. Click "Create database" button (big blue button)
+    4. Select "Start in test mode" (we'll secure it in Step 4)
+    5. Click "Next"
+    6. Choose a location close to you:
+       - If in India: select "asia-south1 (Mumbai)"
+       - If in USA: select "us-central1 (Iowa)"
+       - If elsewhere: choose closest region
+    7. Click "Enable"
+    8. Wait 30-60 seconds for database creation
+    
+    
+    STEP 3: ENABLE EMAIL/PASSWORD AUTHENTICATION (2 minutes)
+    ============================================================================================================
+    1. In the left sidebar, under "Build", click "Authentication"
+    2. Click "Get started" button
+    3. You'll see a list of sign-in providers
+    4. Find "Email/Password" (first one in the list)
+    5. Click on it
+    6. Toggle "Enable" to ON (the switch should turn blue)
+    7. Click "Save"
+    
+    
+    STEP 4: CREATE USER ACCOUNTS FOR FAMILY (3 minutes)
+    ============================================================================================================
+    1. Still in Authentication section, click "Users" tab (at the top)
+    2. Click "Add user" button
+    
+    FOR YOUR ACCOUNT:
+    3. Email: Enter YOUR email (e.g., "youremail@gmail.com")
+    4. Password: Create a password (e.g., "MyBooks2024!")
+    5. Click "Add user"
+    
+    FOR FAMILY MEMBER 1:
+    6. Click "Add user" again
+    7. Email: Enter family member's email (can be fake like "dad@mybooks.com")
+    8. Password: Create a password for them (e.g., "DadBooks123")
+    9. Click "Add user"
+    
+    FOR FAMILY MEMBER 2:
+    10. Repeat steps 6-9 for second family member
+    
+    IMPORTANT: Write down these credentials! You'll share them with family.
+    
+    
+    STEP 5: GET FIREBASE CONFIGURATION (3 minutes)
+    ============================================================================================================
+    1. Click the GEAR ICON ⚙️ next to "Project Overview" (top left)
+    2. Click "Project settings"
+    3. Scroll down to "Your apps" section
+    4. Click the "</>" icon (it says "Web" when you hover)
+    5. App nickname: Type "BookLibrary"
+    6. Do NOT check "Also set up Firebase Hosting"
+    7. Click "Register app"
+    8. You'll see a code block with firebaseConfig
+    9. Copy these 6 values (you'll need them in Step 7):
+       - apiKey: "AIza..."
+       - authDomain: "your-project.firebaseapp.com"
+       - projectId: "your-project-id"
+       - storageBucket: "your-project.appspot.com"
+       - messagingSenderId: "123456789"
+       - appId: "1:123456:web:..."
+    
+    
+    STEP 6: SET SECURITY RULES (2 minutes)
+    ============================================================================================================
+    1. Go back to "Firestore Database" (left sidebar)
+    2. Click "Rules" tab (at the top)
+    3. DELETE everything in the text box
+    4. COPY and PASTE this exactly:
+    
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        match /books/{bookId} {
+          allow read, write: if request.auth != null;
+        }
+      }
+    }
+    
+    5. Click "Publish" button
+    6. Click "Publish" again in the confirmation dialog
+    
+    
+    STEP 7: UPDATE THIS HTML FILE (5 minutes)
+    ============================================================================================================
+    1. Find line 455 below (search for "YOUR-API-KEY-HERE")
+    2. Replace these 6 values with YOUR values from Step 5:
+    
+       apiKey: "YOUR-API-KEY-HERE"           → Replace with your apiKey
+       authDomain: "YOUR-PROJECT.firebaseapp.com"  → Replace with your authDomain
+       projectId: "YOUR-PROJECT-ID"          → Replace with your projectId
+       storageBucket: "YOUR-PROJECT.appspot.com"   → Replace with your storageBucket
+       messagingSenderId: "YOUR-SENDER-ID"   → Replace with your messagingSenderId
+       appId: "YOUR-APP-ID"                  → Replace with your appId
+    
+    3. Save this file as "index.html" on your computer
+    
+    
+    STEP 8: CREATE GITHUB ACCOUNT (3 minutes) - Skip if you have one
+    ============================================================================================================
+    1. Go to https://github.com
+    2. Click "Sign up"
+    3. Enter your email
+    4. Create a password
+    5. Choose a username (e.g., "bookfan2024")
+    6. Verify you're human (solve the puzzle)
+    7. Click "Create account"
+    8. Check your email and enter the verification code
+    9. Click "Continue"
+    10. Select "Just me" and "Student" (or any options)
+    11. Click "Continue" and then "Skip personalization"
+    
+    
+    STEP 9: CREATE GITHUB REPOSITORY (3 minutes)
+    ============================================================================================================
+    1. On GitHub homepage, click the "+" icon (top right corner)
+    2. Click "New repository"
+    3. Repository name: Type "book-library" (all lowercase, no spaces)
+    4. Description: Type "My personal book tracker"
+    5. Select "Public" (must be public for free GitHub Pages)
+    6. Do NOT check any boxes (no README, no .gitignore, no license)
+    7. Click "Create repository" (green button)
+    
+    
+    STEP 10: UPLOAD YOUR FILE (2 minutes)
+    ============================================================================================================
+    1. You'll see a page with setup instructions
+    2. Click "uploading an existing file" (it's a blue link in the text)
+    3. Drag and drop your "index.html" file into the box
+       OR click "choose your files" and select index.html
+    4. Scroll down to "Commit changes" section
+    5. Click "Commit changes" (green button)
+    
+    
+    STEP 11: ENABLE GITHUB PAGES (3 minutes)
+    ============================================================================================================
+    1. Click "Settings" tab (top of page, right side)
+    2. In the left sidebar, scroll down and click "Pages"
+    3. Under "Source", click the dropdown that says "None"
+    4. Select "main" (or "master" if you don't see "main")
+    5. Leave the folder as "/ (root)"
+    6. Click "Save" button
+    7. Wait 2-3 minutes (GitHub is building your site)
+    8. Refresh the page
+    9. You'll see: "Your site is live at https://YOUR-USERNAME.github.io/book-library/"
+    10. Click that link - YOUR APP IS LIVE!
+    
+    
+    STEP 12: FIRST LOGIN & TEST (2 minutes)
+    ============================================================================================================
+    1. Open your app URL: https://YOUR-USERNAME.github.io/book-library/
+    2. You'll see a login screen
+    3. Enter YOUR email and password (from Step 4)
+    4. Click "Login"
+    5. You should see the empty library screen
+    6. Try adding a book manually to test
+    7. Try scanning a barcode if you have a book handy
+    
+    
+    STEP 13: SHARE WITH FAMILY (1 minute)
+    ============================================================================================================
+    1. Send them the app URL: https://YOUR-USERNAME.github.io/book-library/
+    2. Give them their email and password (from Step 4)
+    3. They open the URL, login once, and they're set!
+    
+    
+    TROUBLESHOOTING:
+    ============================================================================================================
+    - "Firebase: Error (auth/invalid-api-key)": You didn't update the firebaseConfig in Step 7
+    - "Missing or insufficient permissions": You didn't set security rules in Step 6
+    - "Page not found" on GitHub: Wait 3-5 minutes, then refresh
+    - Login doesn't work: Double-check email/password you created in Step 4
+    - Can't scan barcode: Allow camera permissions when browser asks
+    
+    ============================================================================================================
+    -->
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h1>📚 Book Library</h1>
+            <div id="loginError" class="login-error"></div>
+            <form id="loginForm" class="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App (hidden until logged in) -->
+    <div id="mainApp" class="container hidden">
+        <div class="header">
+            <div class="header-top">
+                <h1>📚 My Book Library</h1>
+                <div class="user-info">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="btn btn-logout" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+            <div class="controls">
+                <input type="text" id="searchBox" class="search-box" placeholder="Search by title, author, or ISBN...">
+                <select id="authorFilter" class="filter-select">
+                    <option value="">All Authors</option>
+                </select>
+                <button class="btn btn-primary" onclick="openAddModal()">➕ Add Book</button>
+                <button class="btn btn-secondary" onclick="openScannerModal()">📷 Scan Barcode</button>
+            </div>
+        </div>
+
+        <div id="loadingState" class="loading" style="display: none;">
+            <h2>Loading your library...</h2>
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h2>Your library is empty</h2>
+            <p>Add your first book using the buttons above!</p>
+        </div>
+
+        <div id="booksGrid" class="books-grid"></div>
+    </div>
+
+    <!-- Add Book Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add New Book</h2>
+            <form id="bookForm" onsubmit="saveBook(event)">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="bookTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Author *</label>
+                    <input type="text" id="bookAuthor" required>
+                </div>
+                <div class="form-group">
+                    <label>ISBN (optional)</label>
+                    <input type="text" id="bookISBN">
+                </div>
+                <div class="form-group">
+                    <label>Year (optional)</label>
+                    <input type="text" id="bookYear">
+                </div>
+                <div class="form-group">
+                    <label>Cover Image URL (optional)</label>
+                    <input type="text" id="bookCover">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Book</button>
+                    <button type="button" class="btn" onclick="closeAddModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scanner Modal -->
+    <div id="scannerModal" class="modal">
+        <div class="modal-content">
+            <h2>Scan Book Barcode</h2>
+            <div class="scanner-container">
+                <div id="reader"></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="closeScannerModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <script>
+        // ============================================
+        // FIREBASE CONFIGURATION - REPLACE WITH YOURS
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZGhZOAloVBB5wosuTym2US7jGM-WwPXw",
+            authDomain: "mylibrary-574a8.firebaseapp.com",
+            projectId: "mylibrary-574a8",
+            storageBucket: "mylibrary-574a8.firebasestorage.app",
+            messagingSenderId: "272408179162",
+            appId: "1:272408179162:web:9a5920fde856792ea810e3"
+        };
+
+        // Initialize Firebase
+        let auth;
+        let db;
+        let currentUser = null;
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            alert("Firebase configuration error. Please check your setup.");
+        }
+
+        // Global variables
+        let books = [];
+        let currentEditId = null;
+        let html5QrCode = null;
+
+        // Check authentication state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                showMainApp();
+                loadBooks();
+            } else {
+                showLoginScreen();
+            }
+        });
+
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        // Show main app
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userEmail').textContent = currentUser.email;
+        }
+
+        // Handle login
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                errorDiv.classList.remove('active');
+            } catch (error) {
+                errorDiv.textContent = 'Login failed: ' + error.message;
+                errorDiv.classList.add('active');
+            }
+        }
+
+        // Handle logout
+        async function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                await auth.signOut();
+            }
+        }
+
+        // Load books from Firebase
+        function loadBooks() {
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+            
+            db.collection('books').onSnapshot((snapshot) => {
+                books = [];
+                snapshot.forEach((doc) => {
+                    books.push({ id: doc.id, ...doc.data() });
+                });
+                
+                document.getElementById('loadingState').style.display = 'none';
+                
+                if (books.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('booksGrid').style.display = 'none';
+                } else {
+                    document.getElementById('emptyState').style.display = 'none';
+                    document.getElementById('booksGrid').style.display = 'grid';
+                }
+                
+                updateAuthorFilter();
+                displayBooks();
+            }, (error) => {
+                console.error("Error loading books:", error);
+                document.getElementById('loadingState').style.display = 'none';
+            });
+        }
+
+        // Display books
+        function displayBooks() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const authorFilter = document.getElementById('authorFilter').value;
+            
+            let filteredBooks = books.filter(book => {
+                const matchesSearch = book.title.toLowerCase().includes(searchTerm) ||
+                                    book.author.toLowerCase().includes(searchTerm) ||
+                                    (book.isbn && book.isbn.toLowerCase().includes(searchTerm));
+                
+                const matchesAuthor = !authorFilter || book.author === authorFilter;
+                
+                return matchesSearch && matchesAuthor;
+            });
+
+            const grid = document.getElementById('booksGrid');
+            grid.innerHTML = '';
+
+            filteredBooks.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                
+                const coverUrl = book.coverUrl || 'https://via.placeholder.com/200x300?text=No+Cover';
+                
+                card.innerHTML = `
+                    <img src="${coverUrl}" class="book-cover" alt="${book.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Cover'">
+                    <div class="book-info">
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-author">by ${book.author}</div>
+                        ${book.year ? `<div style="font-size: 12px; color: #999;">Year: ${book.year}</div>` : ''}
+                        ${book.isbn ? `<div style="font-size: 12px; color: #999;">ISBN: ${book.isbn}</div>` : ''}
+                        <div class="book-actions">
+                            <button class="btn btn-edit" onclick="editBook('${book.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteBook('${book.id}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Update author filter dropdown
+        function updateAuthorFilter() {
+            const select = document.getElementById('authorFilter');
+            const authors = [...new Set(books.map(b => b.author))].sort();
+            
+            select.innerHTML = '<option value="">All Authors</option>';
+            authors.forEach(author => {
+                const option = document.createElement('option');
+                option.value = author;
+                option.textContent = author;
+                select.appendChild(option);
+            });
+        }
+
+        // Open add modal
+        function openAddModal() {
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Book';
+            document.getElementById('bookForm').reset();
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        // Close add modal
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+            document.getElementById('bookForm').reset();
+            currentEditId = null;
+        }
+
+        // Save book
+        async function saveBook(event) {
+            event.preventDefault();
+
+            const bookData = {
+                title: document.getElementById('bookTitle').value,
+                author: document.getElementById('bookAuthor').value,
+                isbn: document.getElementById('bookISBN').value || null,
+                year: document.getElementById('bookYear').value || null,
+                coverUrl: document.getElementById('bookCover').value || null,
+                addedDate: new Date().toISOString(),
+                addedBy: currentUser.email
+            };
+
+            try {
+                if (currentEditId) {
+                    await db.collection('books').doc(currentEditId).update(bookData);
+                } else {
+                    await db.collection('books').add(bookData);
+                }
+                closeAddModal();
+            } catch (error) {
+                console.error("Error saving book:", error);
+                alert('Error saving book: ' + error.message);
+            }
+        }
+
+        // Edit book
+        function editBook(bookId) {
+            const book = books.find(b => b.id === bookId);
+            if (!book) return;
+
+            currentEditId = bookId;
+            document.getElementById('modalTitle').textContent = 'Edit Book';
+            document.getElementById('bookTitle').value = book.title;
+            document.getElementById('bookAuthor').value = book.author;
+            document.getElementById('bookISBN').value = book.isbn || '';
+            document.getElementById('bookYear').value = book.year || '';
+            document.getElementById('bookCover').value = book.coverUrl || '';
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        // Delete book
+        async function deleteBook(bookId) {
+            if (!confirm('Are you sure you want to delete this book?')) return;
+
+            try {
+                await db.collection('books').doc(bookId).delete();
+            } catch (error) {
+                console.error("Error deleting book:", error);
+                alert('Error deleting book: ' + error.message);
+            }
+        }
+
+        // Open scanner modal
+        function openScannerModal() {
+            document.getElementById('scannerModal').classList.add('active');
+            startScanner();
+        }
+
+        // Close scanner modal
+        function closeScannerModal() {
+            document.getElementById('scannerModal').classList.remove('active');
+            stopScanner();
+        }
+
+        // Start barcode scanner
