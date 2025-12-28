@@ -628,8 +628,9 @@ service cloud.firestore {
                 </div>
             </div>
             <div class="controls">
-                <input type="text" id="searchBox" class="search-box" placeholder="Search by title, author, or ISBN...">
-                <select id="authorFilter" class="filter-select">
+                <input type="text" id="searchBox" class="search-box" placeholder="Search by title, author, or ISBN..." onkeyup="displayBooks()">
+                <button class="btn btn-primary" onclick="displayBooks()" style="padding: 10px 15px;">🔍 Search</button>
+                <select id="authorFilter" class="filter-select" onchange="displayBooks()">
                     <option value="">All Authors</option>
                 </select>
                 <button class="btn btn-primary" onclick="openAddModal()">➕ Add Book</button>
@@ -709,12 +710,12 @@ service cloud.firestore {
         // FIREBASE CONFIGURATION - REPLACE WITH YOURS
         // ============================================
         const firebaseConfig = {
-            apiKey: "AIzaSyAZGhZOAloVBB5wosuTym2US7jGM-WwPXw",
-            authDomain: "mylibrary-574a8.firebaseapp.com",
-            projectId: "mylibrary-574a8",
-            storageBucket: "mylibrary-574a8.firebasestorage.app",
-            messagingSenderId: "272408179162",
-            appId: "1:272408179162:web:9a5920fde856792ea810e3"
+            apiKey: "YOUR-API-KEY-HERE",
+            authDomain: "YOUR-PROJECT.firebaseapp.com",
+            projectId: "YOUR-PROJECT-ID",
+            storageBucket: "YOUR-PROJECT.appspot.com",
+            messagingSenderId: "YOUR-SENDER-ID",
+            appId: "YOUR-APP-ID"
         };
 
         // Initialize Firebase
