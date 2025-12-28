@@ -707,7 +707,7 @@ service cloud.firestore {
 
     <script>
         // ============================================
-        // FIREBASE CONFIGURATION - REPLACE WITH YOURS
+        // FIREBASE CONFIGURATION - YOUR CONFIG
         // ============================================
         const firebaseConfig = {
             apiKey: "AIzaSyAZGhZOAloVBB5wosuTym2US7jGM-WwPXw",
@@ -1065,9 +1065,20 @@ service cloud.firestore {
             }
         }
 
-        // Event listeners
-        document.getElementById('searchBox').addEventListener('input', displayBooks);
-        document.getElementById('authorFilter').addEventListener('change', displayBooks);
+        // Initialize event listeners after page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            const searchBox = document.getElementById('searchBox');
+            const authorFilter = document.getElementById('authorFilter');
+            
+            if (searchBox) {
+                searchBox.addEventListener('input', displayBooks);
+                searchBox.addEventListener('keyup', displayBooks);
+            }
+            
+            if (authorFilter) {
+                authorFilter.addEventListener('change', displayBooks);
+            }
+        });
     </script>
 </body>
 </html>
