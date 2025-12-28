@@ -97,6 +97,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .header h1 {
@@ -341,12 +343,32 @@
         .hidden {
             display: none !important;
         }
+
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .user-info {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .controls {
+                width: 100%;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
     <!-- 
     ============================================================================================================
-    COMPLETE SETUP INSTRUCTIONS - FOLLOW CAREFULLY
+    COMPLETE SETUP INSTRUCTIONS - FOLLOW STEP BY STEP
     ============================================================================================================
     
     STEP 1: CREATE FIREBASE PROJECT (5 minutes)
@@ -376,6 +398,7 @@
        - If elsewhere: choose closest region
     7. Click "Enable"
     8. Wait 30-60 seconds for database creation
+    9. You'll see "(default)" database created - this is what the app uses automatically!
     
     
     STEP 3: ENABLE EMAIL/PASSWORD AUTHENTICATION (2 minutes)
@@ -401,14 +424,14 @@
     
     FOR FAMILY MEMBER 1:
     6. Click "Add user" again
-    7. Email: Enter family member's email (can be fake like "dad@mybooks.com")
+    7. Email: Enter family member's email (can be anything like "dad@mybooks.com")
     8. Password: Create a password for them (e.g., "DadBooks123")
     9. Click "Add user"
     
     FOR FAMILY MEMBER 2:
     10. Repeat steps 6-9 for second family member
     
-    IMPORTANT: Write down these credentials! You'll share them with family.
+    IMPORTANT: Write down these email/password combinations! You'll share them with family.
     
     
     STEP 5: GET FIREBASE CONFIGURATION (3 minutes)
@@ -416,53 +439,67 @@
     1. Click the GEAR ICON ⚙️ next to "Project Overview" (top left)
     2. Click "Project settings"
     3. Scroll down to "Your apps" section
-    4. Click the "</>" icon (it says "Web" when you hover)
-    5. App nickname: Type "BookLibrary"
+    4. If you see a web app already listed, click on it to see config
+       If not, click the "</>" icon (it says "Web" when you hover)
+    5. If creating new: App nickname: Type "BookLibrary"
     6. Do NOT check "Also set up Firebase Hosting"
-    7. Click "Register app"
+    7. Click "Register app" (if creating new)
     8. You'll see a code block with firebaseConfig
-    9. Copy these 6 values (you'll need them in Step 7):
-       - apiKey: "AIza..."
-       - authDomain: "your-project.firebaseapp.com"
-       - projectId: "your-project-id"
-       - storageBucket: "your-project.appspot.com"
-       - messagingSenderId: "123456789"
-       - appId: "1:123456:web:..."
+    9. Copy these 6 values (you'll paste them in Step 7):
+       
+       apiKey: "AIza..."
+       authDomain: "your-project.firebaseapp.com"
+       projectId: "your-project-id"
+       storageBucket: "your-project.appspot.com"
+       messagingSenderId: "123456789"
+       appId: "1:123456:web:..."
+    
+    10. Keep this page open or save these values in a text file
     
     
     STEP 6: SET SECURITY RULES (2 minutes)
     ============================================================================================================
     1. Go back to "Firestore Database" (left sidebar)
     2. Click "Rules" tab (at the top)
-    3. DELETE everything in the text box
-    4. COPY and PASTE this exactly:
+    3. You'll see existing rules in a text editor
+    4. DELETE everything in the text box
+    5. COPY and PASTE this exactly:
     
-    rules_version = '2';
-    service cloud.firestore {
-      match /databases/{database}/documents {
-        match /books/{bookId} {
-          allow read, write: if request.auth != null;
-        }
-      }
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /books/{bookId} {
+      allow read, write: if request.auth != null;
     }
+  }
+}
     
-    5. Click "Publish" button
-    6. Click "Publish" again in the confirmation dialog
+    6. Click "Publish" button (top right)
+    7. Wait for "Rules published successfully" message
     
     
     STEP 7: UPDATE THIS HTML FILE (5 minutes)
     ============================================================================================================
-    1. Find line 455 below (search for "YOUR-API-KEY-HERE")
-    2. Replace these 6 values with YOUR values from Step 5:
+    1. Open this HTML file in a text editor (Notepad, TextEdit, VS Code, etc.)
+    2. Find line 480 below (search for "YOUR-API-KEY-HERE")
+    3. You'll see this section:
     
-       apiKey: "YOUR-API-KEY-HERE"           → Replace with your apiKey
-       authDomain: "YOUR-PROJECT.firebaseapp.com"  → Replace with your authDomain
-       projectId: "YOUR-PROJECT-ID"          → Replace with your projectId
-       storageBucket: "YOUR-PROJECT.appspot.com"   → Replace with your storageBucket
-       messagingSenderId: "YOUR-SENDER-ID"   → Replace with your messagingSenderId
-       appId: "YOUR-APP-ID"                  → Replace with your appId
+        const firebaseConfig = {
+            apiKey: "YOUR-API-KEY-HERE",
+            authDomain: "YOUR-PROJECT.firebaseapp.com",
+            projectId: "YOUR-PROJECT-ID",
+            storageBucket: "YOUR-PROJECT.appspot.com",
+            messagingSenderId: "YOUR-SENDER-ID",
+            appId: "YOUR-APP-ID"
+        };
     
-    3. Save this file as "index.html" on your computer
+    4. Replace EACH value with YOUR values from Step 5:
+       - Keep the quotes ""
+       - Only replace the text inside the quotes
+       - Example: apiKey: "AIzaSyAbc123YourRealKeyHere"
+    
+    5. Save the file as "index.html"
+    6. Make sure it's saved as .html (not .txt)
     
     
     STEP 8: CREATE GITHUB ACCOUNT (3 minutes) - Skip if you have one
@@ -475,9 +512,7 @@
     6. Verify you're human (solve the puzzle)
     7. Click "Create account"
     8. Check your email and enter the verification code
-    9. Click "Continue"
-    10. Select "Just me" and "Student" (or any options)
-    11. Click "Continue" and then "Skip personalization"
+    9. Complete the signup
     
     
     STEP 9: CREATE GITHUB REPOSITORY (3 minutes)
@@ -486,60 +521,79 @@
     2. Click "New repository"
     3. Repository name: Type "book-library" (all lowercase, no spaces)
     4. Description: Type "My personal book tracker"
-    5. Select "Public" (must be public for free GitHub Pages)
+    5. Select "Public" (MUST be public for free GitHub Pages)
     6. Do NOT check any boxes (no README, no .gitignore, no license)
-    7. Click "Create repository" (green button)
+    7. Click "Create repository" (green button at bottom)
     
     
     STEP 10: UPLOAD YOUR FILE (2 minutes)
     ============================================================================================================
     1. You'll see a page with setup instructions
-    2. Click "uploading an existing file" (it's a blue link in the text)
-    3. Drag and drop your "index.html" file into the box
+    2. Look for the text "uploading an existing file" (it's a blue link)
+    3. Click that link
+    4. Drag and drop your "index.html" file into the box
        OR click "choose your files" and select index.html
-    4. Scroll down to "Commit changes" section
-    5. Click "Commit changes" (green button)
+    5. The filename MUST be "index.html" (not "book-library.html" or anything else)
+    6. Scroll down to "Commit changes" section
+    7. Click "Commit changes" (green button)
     
     
     STEP 11: ENABLE GITHUB PAGES (3 minutes)
     ============================================================================================================
-    1. Click "Settings" tab (top of page, right side)
+    1. Click "Settings" tab (top of page, near the right)
     2. In the left sidebar, scroll down and click "Pages"
-    3. Under "Source", click the dropdown that says "None"
-    4. Select "main" (or "master" if you don't see "main")
-    5. Leave the folder as "/ (root)"
+    3. Under "Source", you'll see a dropdown that says "None"
+    4. Click it and select "main" (if you don't see "main", select "master")
+    5. Leave the folder dropdown as "/ (root)"
     6. Click "Save" button
-    7. Wait 2-3 minutes (GitHub is building your site)
-    8. Refresh the page
-    9. You'll see: "Your site is live at https://YOUR-USERNAME.github.io/book-library/"
-    10. Click that link - YOUR APP IS LIVE!
+    7. You'll see a blue box appear that says "GitHub Pages source saved"
+    8. Wait 2-3 minutes (GitHub is building your site)
+    9. Refresh the page
+    10. You'll see a green box: "Your site is live at https://YOUR-USERNAME.github.io/book-library/"
+    11. Click that URL - YOUR APP IS LIVE!
     
     
     STEP 12: FIRST LOGIN & TEST (2 minutes)
     ============================================================================================================
     1. Open your app URL: https://YOUR-USERNAME.github.io/book-library/
     2. You'll see a login screen
-    3. Enter YOUR email and password (from Step 4)
+    3. Enter YOUR email and password (the one you created in Step 4)
     4. Click "Login"
-    5. You should see the empty library screen
-    6. Try adding a book manually to test
-    7. Try scanning a barcode if you have a book handy
+    5. You should see "Your library is empty" screen
+    6. Click "➕ Add Book" and try adding a book manually
+    7. If it works, congratulations! Your app is ready!
     
     
     STEP 13: SHARE WITH FAMILY (1 minute)
     ============================================================================================================
     1. Send them the app URL: https://YOUR-USERNAME.github.io/book-library/
     2. Give them their email and password (from Step 4)
-    3. They open the URL, login once, and they're set!
+    3. They open the URL, login once, and their browser remembers them
+    4. They can now access the same library from any device!
     
     
     TROUBLESHOOTING:
     ============================================================================================================
-    - "Firebase: Error (auth/invalid-api-key)": You didn't update the firebaseConfig in Step 7
-    - "Missing or insufficient permissions": You didn't set security rules in Step 6
-    - "Page not found" on GitHub: Wait 3-5 minutes, then refresh
-    - Login doesn't work: Double-check email/password you created in Step 4
-    - Can't scan barcode: Allow camera permissions when browser asks
+    Problem: "Firebase: Error (auth/invalid-api-key)"
+    Solution: You didn't update firebaseConfig in Step 7. Open index.html and replace the config values.
+    
+    Problem: "Missing or insufficient permissions"
+    Solution: You didn't set security rules in Step 6. Go back to Firebase → Firestore → Rules.
+    
+    Problem: "Page not found" (404 error) on GitHub
+    Solution: Wait 3-5 minutes after enabling GitHub Pages, then refresh. It takes time to deploy.
+    
+    Problem: Login doesn't work / "wrong password"
+    Solution: Double-check the email/password you created in Step 4. They must match exactly.
+    
+    Problem: Can't scan barcode
+    Solution: Browser needs camera permission. Click "Allow" when prompted. On iPhone, use Safari.
+    
+    Problem: Book not found when scanning
+    Solution: Not all books are in Google Books API. Click "Add Book" manually instead.
+    
+    Problem: GitHub says "file must be named index.html"
+    Solution: Rename your file to exactly "index.html" (not Index.html or index.HTML).
     
     ============================================================================================================
     -->
@@ -632,6 +686,7 @@
     <div id="scannerModal" class="modal">
         <div class="modal-content">
             <h2>Scan Book Barcode</h2>
+            <p style="color: #666; margin-bottom: 15px;">Point your camera at the ISBN barcode on the back of the book</p>
             <div class="scanner-container">
                 <div id="reader"></div>
             </div>
@@ -673,7 +728,7 @@
             db = firebase.firestore();
         } catch (error) {
             console.error("Firebase initialization error:", error);
-            alert("Firebase configuration error. Please check your setup.");
+            alert("Firebase configuration error. Please check your setup in the HTML file.");
         }
 
         // Global variables
@@ -717,7 +772,17 @@
                 await auth.signInWithEmailAndPassword(email, password);
                 errorDiv.classList.remove('active');
             } catch (error) {
-                errorDiv.textContent = 'Login failed: ' + error.message;
+                let errorMessage = 'Login failed: ';
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage += 'No user found with this email.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage += 'Incorrect password.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage += 'Invalid email address.';
+                } else {
+                    errorMessage += error.message;
+                }
+                errorDiv.textContent = errorMessage;
                 errorDiv.classList.add('active');
             }
         }
@@ -734,7 +799,7 @@
             document.getElementById('loadingState').style.display = 'block';
             document.getElementById('emptyState').style.display = 'none';
             
-            db.collection('books').onSnapshot((snapshot) => {
+            db.collection('books').orderBy('addedDate', 'desc').onSnapshot((snapshot) => {
                 books = [];
                 snapshot.forEach((doc) => {
                     books.push({ id: doc.id, ...doc.data() });
@@ -755,6 +820,7 @@
             }, (error) => {
                 console.error("Error loading books:", error);
                 document.getElementById('loadingState').style.display = 'none';
+                alert('Error loading books. Please check your internet connection and Firebase setup.');
             });
         }
 
@@ -785,10 +851,10 @@
                 card.innerHTML = `
                     <img src="${coverUrl}" class="book-cover" alt="${book.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Cover'">
                     <div class="book-info">
-                        <div class="book-title">${book.title}</div>
-                        <div class="book-author">by ${book.author}</div>
-                        ${book.year ? `<div style="font-size: 12px; color: #999;">Year: ${book.year}</div>` : ''}
-                        ${book.isbn ? `<div style="font-size: 12px; color: #999;">ISBN: ${book.isbn}</div>` : ''}
+                        <div class="book-title">${escapeHtml(book.title)}</div>
+                        <div class="book-author">by ${escapeHtml(book.author)}</div>
+                        ${book.year ? `<div style="font-size: 12px; color: #999;">Year: ${escapeHtml(book.year)}</div>` : ''}
+                        ${book.isbn ? `<div style="font-size: 12px; color: #999;">ISBN: ${escapeHtml(book.isbn)}</div>` : ''}
                         <div class="book-actions">
                             <button class="btn btn-edit" onclick="editBook('${book.id}')">Edit</button>
                             <button class="btn btn-danger" onclick="deleteBook('${book.id}')">Delete</button>
@@ -798,6 +864,13 @@
                 
                 grid.appendChild(card);
             });
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // Update author filter dropdown
@@ -896,3 +969,104 @@
         }
 
         // Start barcode scanner
+        function startScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                onScanSuccess,
+                onScanError
+            ).catch(err => {
+                console.error("Scanner error:", err);
+                alert('Unable to start camera. Please check permissions or try adding the book manually.');
+            });
+        }
+
+        // Stop barcode scanner
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.error(err));
+            }
+        }
+
+        // Handle successful scan
+        async function onScanSuccess(decodedText) {
+            stopScanner();
+            closeScannerModal();
+            
+            const isbn = decodedText.replace(/[^0-9]/g, '');
+            await searchBookByISBN(isbn);
+        }
+
+        // Handle scan error
+        function onScanError(errorMessage) {
+            // Ignore - errors happen constantly while scanning
+        }
+
+        // Search book by ISBN using Google Books API
+        async function searchBookByISBN(isbn) {
+            try {
+                const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    const bookInfo = data.items[0].volumeInfo;
+                    
+                    document.getElementById('bookTitle').value = bookInfo.title || '';
+                    document.getElementById('bookAuthor').value = bookInfo.authors ? bookInfo.authors.join(', ') : '';
+                    document.getElementById('bookISBN').value = isbn;
+                    document.getElementById('bookYear').value = bookInfo.publishedDate ? bookInfo.publishedDate.substring(0, 4) : '';
+                    document.getElementById('bookCover').value = bookInfo.imageLinks ? bookInfo.imageLinks.thumbnail : '';
+                    
+                    openAddModal();
+                } else {
+                    await searchBookByISBNOpenLibrary(isbn);
+                }
+            } catch (error) {
+                console.error("Error fetching book info:", error);
+                alert('Book not found in online databases. Please add manually.');
+                document.getElementById('bookISBN').value = isbn;
+                openAddModal();
+            }
+        }
+
+        // Search book using Open Library API (fallback)
+        async function searchBookByISBNOpenLibrary(isbn) {
+            try {
+                const response = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+                const data = await response.json();
+                
+                const bookKey = `ISBN:${isbn}`;
+                if (data[bookKey]) {
+                    const bookInfo = data[bookKey];
+                    
+                    document.getElementById('bookTitle').value = bookInfo.title || '';
+                    document.getElementById('bookAuthor').value = bookInfo.authors ? bookInfo.authors.map(a => a.name).join(', ') : '';
+                    document.getElementById('bookISBN').value = isbn;
+                    document.getElementById('bookYear').value = bookInfo.publish_date || '';
+                    document.getElementById('bookCover').value = bookInfo.cover ? bookInfo.cover.large || bookInfo.cover.medium : '';
+                    
+                    openAddModal();
+                } else {
+                    alert('Book not found in online databases. Please add manually.');
+                    document.getElementById('bookISBN').value = isbn;
+                    openAddModal();
+                }
+            } catch (error) {
+                console.error("Error fetching book info:", error);
+                alert('Book not found in online databases. Please add manually.');
+                document.getElementById('bookISBN').value = isbn;
+                openAddModal();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('searchBox').addEventListener('input', displayBooks);
+        document.getElementById('authorFilter').addEventListener('change', displayBooks);
+    </script>
+</body>
+</html>
