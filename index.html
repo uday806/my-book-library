@@ -23,6 +23,68 @@
             margin: 0 auto;
         }
 
+        /* Mode Selection Screen */
+        .mode-selection {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .mode-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .mode-box h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .mode-box p {
+            color: #666;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mode-btn {
+            padding: 20px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .mode-btn:hover {
+            background: #f0f4ff;
+            transform: translateY(-2px);
+        }
+
+        .mode-btn h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .mode-btn p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+            text-align: left;
+        }
+
         /* Login Screen Styles */
         .login-container {
             display: flex;
@@ -214,6 +276,26 @@
             padding: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: transform 0.3s;
+            position: relative;
+        }
+
+        .book-card.selected {
+            border: 3px solid #667eea;
+            transform: scale(0.98);
+        }
+
+        .book-checkbox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .bulk-delete-mode .book-checkbox {
+            display: block;
         }
 
         .book-card:hover {
@@ -598,6 +680,24 @@ service cloud.firestore {
     ============================================================================================================
     -->
 
+    <!-- Mode Selection Screen -->
+    <div id="modeSelection" class="mode-selection">
+        <div class="mode-box">
+            <h1>📚 Book Library</h1>
+            <p>Choose how you want to use the app:</p>
+            <div class="mode-buttons">
+                <button class="mode-btn" onclick="selectMode('local')">
+                    <h3>💾 Local Storage Mode (Test)</h3>
+                    <p>Data saved in your browser only. Perfect for testing. No setup required!</p>
+                </button>
+                <button class="mode-btn" onclick="selectMode('firebase')">
+                    <h3>☁️ Firebase Mode (Multi-Device)</h3>
+                    <p>Sync across devices. Requires Firebase setup and login.</p>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Login Screen -->
     <div id="loginScreen" class="login-container">
         <div class="login-box">
@@ -635,6 +735,10 @@ service cloud.firestore {
                 </select>
                 <button class="btn btn-primary" onclick="openAddModal()">➕ Add Book</button>
                 <button class="btn btn-secondary" onclick="openScannerModal()">📷 Scan Barcode</button>
+                <button class="btn" style="background: #805ad5; color: white;" onclick="openBulkImportModal()">📋 Bulk Import</button>
+                <button class="btn btn-danger" id="bulkDeleteBtn" onclick="toggleBulkDeleteMode()">🗑️ Bulk Delete</button>
+                <button class="btn btn-danger hidden" id="deleteSelectedBtn" onclick="deleteSelectedBooks()">Delete Selected (<span id="selectedCount">0</span>)</button>
+                <button class="btn hidden" id="cancelBulkDeleteBtn" onclick="cancelBulkDelete()">Cancel</button>
             </div>
         </div>
 
@@ -654,6 +758,21 @@ service cloud.firestore {
     <div id="addModal" class="modal">
         <div class="modal-content">
             <h2 id="modalTitle">Add New Book</h2>
+            
+            <!-- Book Lookup Search -->
+            <div class="form-group" id="bookLookupSection">
+                <label>🔍 Search for Book (Optional)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="bookLookup" placeholder="Enter title, author, or ISBN...">
+                    <button type="button" class="btn btn-secondary" onclick="searchPublicDatabase()">Search</button>
+                </div>
+                <div id="lookupResults" style="margin-top: 10px; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+            
+            <div style="border-top: 2px solid #eee; margin: 20px 0; padding-top: 20px;">
+                <p style="text-align: center; color: #999; font-size: 14px; margin-bottom: 15px;">Or enter manually:</p>
+            </div>
+            
             <form id="bookForm" onsubmit="saveBook(event)">
                 <div class="form-group">
                     <label>Title *</label>
@@ -697,6 +816,43 @@ service cloud.firestore {
         </div>
     </div>
 
+    <!-- Bulk Import Modal -->
+    <div id="bulkImportModal" class="modal">
+        <div class="modal-content">
+            <h2>📋 Bulk Import Books</h2>
+            <p style="color: #666; margin-bottom: 15px;">Paste JSON array of books to import multiple books at once</p>
+            
+            <div class="form-group">
+                <label>JSON Data</label>
+                <textarea id="bulkImportData" rows="15" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-family: monospace; font-size: 14px;" placeholder='[
+  {"title": "Book Title", "author": "Author Name", "isbn": "123456", "year": "2020"},
+  {"title": "Another Book", "author": "Another Author"}
+]'></textarea>
+            </div>
+            
+            <div id="bulkImportStatus" style="margin-top: 10px; padding: 10px; border-radius: 8px; display: none;"></div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-primary" onclick="processBulkImport()">Import Books</button>
+                <button type="button" class="btn" onclick="closeBulkImportModal()">Cancel</button>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px; font-size: 14px;">
+                <strong>JSON Format:</strong>
+                <pre style="margin-top: 10px; background: white; padding: 10px; border-radius: 4px; overflow-x: auto;">
+[
+  {
+    "title": "Required",
+    "author": "Required", 
+    "isbn": "Optional",
+    "year": "Optional",
+    "coverUrl": "Optional"
+  }
+]</pre>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -718,47 +874,100 @@ service cloud.firestore {
             appId: "1:272408179162:web:9a5920fde856792ea810e3"
         };
 
-        // Initialize Firebase
+        // Global variables
+        let USE_LOCAL_STORAGE = false;
         let auth;
         let db;
         let currentUser = null;
-        
-        try {
-            firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            db = firebase.firestore();
-        } catch (error) {
-            console.error("Firebase initialization error:", error);
-            alert("Firebase configuration error. Please check your setup in the HTML file.");
-        }
-
-        // Global variables
         let books = [];
         let currentEditId = null;
         let html5QrCode = null;
+        let bulkDeleteMode = false;
+        let selectedBooks = new Set();
 
-        // Check authentication state
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
+        // Select storage mode
+        function selectMode(mode) {
+            if (mode === 'local') {
+                USE_LOCAL_STORAGE = true;
+                document.getElementById('modeSelection').classList.add('hidden');
                 showMainApp();
-                loadBooks();
+                loadBooksFromLocalStorage();
             } else {
-                showLoginScreen();
+                USE_LOCAL_STORAGE = false;
+                initializeFirebase();
+                document.getElementById('modeSelection').classList.add('hidden');
             }
-        });
+        }
+
+        // Initialize Firebase
+        function initializeFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                // Check authentication state
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        currentUser = user;
+                        showMainApp();
+                        loadBooks();
+                    } else {
+                        showLoginScreen();
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                alert("Firebase configuration error. Switching to Local Storage mode.");
+                USE_LOCAL_STORAGE = true;
+                showMainApp();
+                loadBooksFromLocalStorage();
+            }
+        }
+
+        // Local Storage functions
+        function loadBooksFromLocalStorage() {
+            const stored = localStorage.getItem('myBookLibrary');
+            books = stored ? JSON.parse(stored) : [];
+            displayBooksUI();
+        }
+
+        function saveBooksToLocalStorage() {
+            localStorage.setItem('myBookLibrary', JSON.stringify(books));
+        }
+
+        function displayBooksUI() {
+            if (books.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('booksGrid').style.display = 'none';
+            } else {
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('booksGrid').style.display = 'grid';
+            }
+            updateAuthorFilter();
+            displayBooks();
+        }
 
         // Show login screen
         function showLoginScreen() {
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('modeSelection').classList.add('hidden');
         }
 
         // Show main app
         function showMainApp() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('modeSelection').classList.add('hidden');
+            
+            if (USE_LOCAL_STORAGE) {
+                document.getElementById('userEmail').textContent = 'Local Storage Mode';
+                document.querySelector('.btn-logout').textContent = 'Switch Mode';
+            } else if (currentUser && currentUser.email) {
+                document.getElementById('userEmail').textContent = currentUser.email;
+                document.querySelector('.btn-logout').textContent = 'Logout';
+            }
         }
 
         // Handle login
@@ -790,13 +999,24 @@ service cloud.firestore {
 
         // Handle logout
         async function handleLogout() {
-            if (confirm('Are you sure you want to logout?')) {
-                await auth.signOut();
+            if (USE_LOCAL_STORAGE) {
+                if (confirm('Switch back to mode selection?')) {
+                    location.reload();
+                }
+            } else {
+                if (confirm('Are you sure you want to logout?')) {
+                    await auth.signOut();
+                }
             }
         }
 
         // Load books from Firebase
         function loadBooks() {
+            if (USE_LOCAL_STORAGE) {
+                loadBooksFromLocalStorage();
+                return;
+            }
+            
             document.getElementById('loadingState').style.display = 'block';
             document.getElementById('emptyState').style.display = 'none';
             
@@ -807,17 +1027,7 @@ service cloud.firestore {
                 });
                 
                 document.getElementById('loadingState').style.display = 'none';
-                
-                if (books.length === 0) {
-                    document.getElementById('emptyState').style.display = 'block';
-                    document.getElementById('booksGrid').style.display = 'none';
-                } else {
-                    document.getElementById('emptyState').style.display = 'none';
-                    document.getElementById('booksGrid').style.display = 'grid';
-                }
-                
-                updateAuthorFilter();
-                displayBooks();
+                displayBooksUI();
             }, (error) => {
                 console.error("Error loading books:", error);
                 document.getElementById('loadingState').style.display = 'none';
@@ -846,20 +1056,45 @@ service cloud.firestore {
             filteredBooks.forEach(book => {
                 const card = document.createElement('div');
                 card.className = 'book-card';
+                if (selectedBooks.has(book.id)) {
+                    card.classList.add('selected');
+                }
                 
-                const coverUrl = book.coverUrl || 'https://via.placeholder.com/200x300?text=No+Cover';
+                const coverUrl = book.coverUrl || 'data:image/svg+xml;utf8,' +
+                    encodeURIComponent(`
+                        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="300">
+                        <rect width="100%" height="100%" fill="#f0f0f0"/>
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                                fill="#999" font-size="20" font-family="Arial">
+                            No Cover
+                        </text>
+                        </svg>
+                    `); 
+
+                //'https://via.placeholder.com/200x300?text=No+Cover';
+                
+                const checkbox = bulkDeleteMode ? `
+                    <input type="checkbox" class="book-checkbox" 
+                           ${selectedBooks.has(book.id) ? 'checked' : ''}
+                           onchange="toggleBookSelection('${book.id}', this.checked)">
+                ` : '';
+                
+                const actions = bulkDeleteMode ? '' : `
+                    <div class="book-actions">
+                        <button class="btn btn-edit" onclick="editBook('${book.id}')">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteBook('${book.id}')">Delete</button>
+                    </div>
+                `;
                 
                 card.innerHTML = `
-                    <img src="${coverUrl}" class="book-cover" alt="${book.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Cover'">
+                    ${checkbox}
+                    <img src="${coverUrl}" class="book-cover" alt="${escapeHtml(book.title)}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Cover'">
                     <div class="book-info">
                         <div class="book-title">${escapeHtml(book.title)}</div>
                         <div class="book-author">by ${escapeHtml(book.author)}</div>
                         ${book.year ? `<div style="font-size: 12px; color: #999;">Year: ${escapeHtml(book.year)}</div>` : ''}
                         ${book.isbn ? `<div style="font-size: 12px; color: #999;">ISBN: ${escapeHtml(book.isbn)}</div>` : ''}
-                        <div class="book-actions">
-                            <button class="btn btn-edit" onclick="editBook('${book.id}')">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteBook('${book.id}')">Delete</button>
-                        </div>
+                        ${actions}
                     </div>
                 `;
                 
@@ -893,6 +1128,9 @@ service cloud.firestore {
             currentEditId = null;
             document.getElementById('modalTitle').textContent = 'Add New Book';
             document.getElementById('bookForm').reset();
+            document.getElementById('bookLookup').value = '';
+            document.getElementById('lookupResults').innerHTML = '';
+            document.getElementById('bookLookupSection').style.display = 'block';
             document.getElementById('addModal').classList.add('active');
         }
 
@@ -900,7 +1138,68 @@ service cloud.firestore {
         function closeAddModal() {
             document.getElementById('addModal').classList.remove('active');
             document.getElementById('bookForm').reset();
+            document.getElementById('bookLookup').value = '';
+            document.getElementById('lookupResults').innerHTML = '';
             currentEditId = null;
+        }
+
+        // Search public database (Google Books API)
+        async function searchPublicDatabase() {
+            const query = document.getElementById('bookLookup').value.trim();
+            if (!query) {
+                alert('Please enter a search term');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('lookupResults');
+            resultsDiv.innerHTML = '<p style="color: #666; padding: 10px;">Searching...</p>';
+
+            try {
+                const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`);
+                const data = await response.json();
+
+                if (data.items && data.items.length > 0) {
+                    let html = '<div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">';
+                    
+                    data.items.forEach((item, index) => {
+                        const book = item.volumeInfo;
+                        const title = book.title || 'Unknown Title';
+                        const authors = book.authors ? book.authors.join(', ') : 'Unknown Author';
+                        const year = book.publishedDate ? book.publishedDate.substring(0, 4) : '';
+                        const isbn = book.industryIdentifiers ? book.industryIdentifiers[0].identifier : '';
+                        const cover = book.imageLinks ? book.imageLinks.thumbnail : '';
+
+                        html += `
+                            <div style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s;" 
+                                 onmouseover="this.style.background='#f5f5f5'" 
+                                 onmouseout="this.style.background='white'"
+                                 onclick="fillBookDetails('${escapeHtml(title)}', '${escapeHtml(authors)}', '${isbn}', '${year}', '${cover}')">
+                                <div style="font-weight: 600; color: #333;">${title}</div>
+                                <div style="font-size: 14px; color: #666;">by ${authors}</div>
+                                ${year ? `<div style="font-size: 12px; color: #999;">Year: ${year}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = '<p style="color: #999; padding: 10px;">No books found. Try different search terms.</p>';
+                }
+            } catch (error) {
+                console.error('Error searching books:', error);
+                resultsDiv.innerHTML = '<p style="color: #c33; padding: 10px;">Search failed. Please try again.</p>';
+            }
+        }
+
+        // Fill book details from search result
+        function fillBookDetails(title, author, isbn, year, cover) {
+            document.getElementById('bookTitle').value = title;
+            document.getElementById('bookAuthor').value = author;
+            document.getElementById('bookISBN').value = isbn;
+            document.getElementById('bookYear').value = year;
+            document.getElementById('bookCover').value = cover;
+            document.getElementById('lookupResults').innerHTML = '<p style="color: #48bb78; padding: 10px;">✓ Book details filled! You can edit them below or click Save.</p>';
         }
 
         // Save book
@@ -914,14 +1213,28 @@ service cloud.firestore {
                 year: document.getElementById('bookYear').value || null,
                 coverUrl: document.getElementById('bookCover').value || null,
                 addedDate: new Date().toISOString(),
-                addedBy: currentUser.email
+                addedBy: USE_LOCAL_STORAGE ? 'local' : (currentUser && currentUser.email ? currentUser.email : 'unknown')
             };
 
             try {
-                if (currentEditId) {
-                    await db.collection('books').doc(currentEditId).update(bookData);
+                if (USE_LOCAL_STORAGE) {
+                    if (currentEditId) {
+                        const index = books.findIndex(b => b.id === currentEditId);
+                        if (index !== -1) {
+                            books[index] = { ...bookData, id: currentEditId };
+                        }
+                    } else {
+                        bookData.id = 'book_' + Date.now();
+                        books.unshift(bookData);
+                    }
+                    saveBooksToLocalStorage();
+                    displayBooksUI();
                 } else {
-                    await db.collection('books').add(bookData);
+                    if (currentEditId) {
+                        await db.collection('books').doc(currentEditId).update(bookData);
+                    } else {
+                        await db.collection('books').add(bookData);
+                    }
                 }
                 closeAddModal();
             } catch (error) {
@@ -942,6 +1255,7 @@ service cloud.firestore {
             document.getElementById('bookISBN').value = book.isbn || '';
             document.getElementById('bookYear').value = book.year || '';
             document.getElementById('bookCover').value = book.coverUrl || '';
+            document.getElementById('bookLookupSection').style.display = 'none';
             document.getElementById('addModal').classList.add('active');
         }
 
@@ -950,10 +1264,104 @@ service cloud.firestore {
             if (!confirm('Are you sure you want to delete this book?')) return;
 
             try {
-                await db.collection('books').doc(bookId).delete();
+                if (USE_LOCAL_STORAGE) {
+                    books = books.filter(b => b.id !== bookId);
+                    saveBooksToLocalStorage();
+                    displayBooksUI();
+                } else {
+                    await db.collection('books').doc(bookId).delete();
+                }
             } catch (error) {
                 console.error("Error deleting book:", error);
                 alert('Error deleting book: ' + error.message);
+            }
+        }
+
+        // Toggle bulk delete mode
+        function toggleBulkDeleteMode() {
+            bulkDeleteMode = true;
+            selectedBooks.clear();
+            
+            document.getElementById('booksGrid').classList.add('bulk-delete-mode');
+            document.getElementById('bulkDeleteBtn').classList.add('hidden');
+            document.getElementById('deleteSelectedBtn').classList.remove('hidden');
+            document.getElementById('cancelBulkDeleteBtn').classList.remove('hidden');
+            
+            // Hide other buttons
+            document.querySelectorAll('.controls .btn').forEach(btn => {
+                if (btn.id !== 'deleteSelectedBtn' && btn.id !== 'cancelBulkDeleteBtn') {
+                    btn.style.display = 'none';
+                }
+            });
+            document.getElementById('searchBox').style.display = 'none';
+            document.getElementById('authorFilter').style.display = 'none';
+            
+            displayBooks();
+        }
+
+        // Cancel bulk delete
+        function cancelBulkDelete() {
+            bulkDeleteMode = false;
+            selectedBooks.clear();
+            
+            document.getElementById('booksGrid').classList.remove('bulk-delete-mode');
+            document.getElementById('bulkDeleteBtn').classList.remove('hidden');
+            document.getElementById('deleteSelectedBtn').classList.add('hidden');
+            document.getElementById('cancelBulkDeleteBtn').classList.add('hidden');
+            
+            // Show other buttons
+            document.querySelectorAll('.controls .btn').forEach(btn => {
+                btn.style.display = '';
+            });
+            document.getElementById('searchBox').style.display = '';
+            document.getElementById('authorFilter').style.display = '';
+            
+            displayBooks();
+        }
+
+        // Toggle book selection
+        function toggleBookSelection(bookId, checked) {
+            if (checked) {
+                selectedBooks.add(bookId);
+            } else {
+                selectedBooks.delete(bookId);
+            }
+            
+            document.getElementById('selectedCount').textContent = selectedBooks.size;
+            displayBooks();
+        }
+
+        // Delete selected books
+        async function deleteSelectedBooks() {
+            if (selectedBooks.size === 0) {
+                alert('Please select books to delete');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete ${selectedBooks.size} books?`)) {
+                return;
+            }
+
+            try {
+                const booksToDelete = Array.from(selectedBooks);
+                
+                for (const bookId of booksToDelete) {
+                    if (USE_LOCAL_STORAGE) {
+                        books = books.filter(b => b.id !== bookId);
+                    } else {
+                        await db.collection('books').doc(bookId).delete();
+                    }
+                }
+
+                if (USE_LOCAL_STORAGE) {
+                    loadBooksFromLocalStorage();
+                }
+
+                alert(`${booksToDelete.length} books deleted successfully!`);
+                cancelBulkDelete();
+            } catch (error) {
+                console.error("Error deleting books:", error);
+                alert('Error deleting books: ' + error.message);
             }
         }
 
@@ -967,6 +1375,111 @@ service cloud.firestore {
         function closeScannerModal() {
             document.getElementById('scannerModal').classList.remove('active');
             stopScanner();
+        }
+
+        // Open bulk import modal
+        function openBulkImportModal() {
+            document.getElementById('bulkImportModal').classList.add('active');
+            document.getElementById('bulkImportData').value = '';
+            document.getElementById('bulkImportStatus').style.display = 'none';
+        }
+
+        // Close bulk import modal
+        function closeBulkImportModal() {
+            document.getElementById('bulkImportModal').classList.remove('active');
+            document.getElementById('bulkImportData').value = '';
+            document.getElementById('bulkImportStatus').style.display = 'none';
+        }
+
+        // Process bulk import
+        async function processBulkImport() {
+            const jsonData = document.getElementById('bulkImportData').value.trim();
+            const statusDiv = document.getElementById('bulkImportStatus');
+            
+            if (!jsonData) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#fee';
+                statusDiv.style.color = '#c33';
+                statusDiv.textContent = 'Please paste JSON data';
+                return;
+            }
+
+            try {
+                const importedBooks = JSON.parse(jsonData);
+                
+                if (!Array.isArray(importedBooks)) {
+                    throw new Error('JSON must be an array of books');
+                }
+
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#e6f7ff';
+                statusDiv.style.color = '#0066cc';
+                statusDiv.textContent = `Importing ${importedBooks.length} books...`;
+
+                let successCount = 0;
+                let errorCount = 0;
+
+                for (let i = 0; i < importedBooks.length; i++) {
+                    const book = importedBooks[i];
+                    
+                    if (!book.title || !book.author) {
+                        console.error('Missing title or author:', book);
+                        errorCount++;
+                        continue;
+                    }
+
+                    const bookData = {
+                        title: String(book.title).trim(),
+                        author: String(book.author).trim(),
+                        isbn: book.isbn ? String(book.isbn).trim() : null,
+                        year: book.year ? String(book.year).trim() : null,
+                        coverUrl: book.coverUrl ? String(book.coverUrl).trim() : null,
+                        series: book.series ? String(book.series).trim() : null,
+                        addedDate: new Date().toISOString(),
+                        addedBy: USE_LOCAL_STORAGE ? 'bulk-import' : (currentUser && currentUser.email ? currentUser.email : 'bulk-import')
+                    };
+
+                    try {
+                        if (USE_LOCAL_STORAGE) {
+                            bookData.id = 'book_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 9);
+                            books.push(bookData);
+                            saveBooksToLocalStorage();
+                        } else {
+                            await db.collection('books').add(bookData);
+                        }
+                        successCount++;
+                        
+                        // Update status in real-time
+                        statusDiv.textContent = `Importing... ${successCount}/${importedBooks.length} completed`;
+                        
+                        // Small delay to avoid conflicts
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    } catch (error) {
+                        console.error('Error importing book:', book.title, error);
+                        errorCount++;
+                    }
+                }
+
+                if (USE_LOCAL_STORAGE) {
+                    saveBooksToLocalStorage();
+                    displayBooksUI();
+                }
+
+                statusDiv.style.background = '#e6ffe6';
+                statusDiv.style.color = '#006600';
+                statusDiv.innerHTML = `<strong>Import Complete!</strong><br>✅ ${successCount} books imported successfully<br>${errorCount > 0 ? `❌ ${errorCount} books failed` : ''}`;
+
+                // Close modal after 3 seconds
+                setTimeout(() => {
+                    closeBulkImportModal();
+                }, 3000);
+
+            } catch (error) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#fee';
+                statusDiv.style.color = '#c33';
+                statusDiv.textContent = 'Error: ' + error.message + '. Please check your JSON format.';
+            }
         }
 
         // Start barcode scanner
